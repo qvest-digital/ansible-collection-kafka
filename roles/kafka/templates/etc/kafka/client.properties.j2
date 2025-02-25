@@ -1,2 +1,20 @@
+bootstrap.controllers={% for node in kafka_controller_quorum_voters %}
+{{ node.host }}:{{ node.port | default(kafka_port_controller_default) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+bootstrap.servers={% for node in kafka_controller_quorum_voters %}
+{{ node.host }}:{{ node.port | default(kafka_port_clients_default) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+{% if kafka_server_client_dns_lookup is defined %}
+client.dns.lookup={{ kafka_server_client_dns_lookup }}
+{% endif %}
+
+client.id=server-{{ kafka_server_node_id }}-client
+
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=PLAIN
+
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+  username="{{ kafka_sasl_broker_username }}" \
+  password="{{ kafka_sasl_broker_password }}";

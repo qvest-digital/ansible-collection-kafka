@@ -72,6 +72,17 @@
     group: root
     state: link
 
+- name: install | Create configuration file server_jaas.conf {{ kafka_config_dir_path }}
+  ansible.builtin.template:
+    src: templates/etc/kafka/server_jaas.conf.j2
+    dest: "{{ kafka_config_dir_path }}/server_jaas.conf"
+    owner: root
+    group: root
+    mode: u=rw-x,g=rw-x,o=r-x
+  register: kafka_server_jaas_conf_file
+  notify:
+    - kafka_restart
+
 - name: install | Create configuration file server.properties in {{ kafka_config_dir_path }}
   ansible.builtin.template:
     src: templates/etc/kafka/server.properties.j2
@@ -82,6 +93,15 @@
   register: kafka_server_properties_file
   notify:
     - kafka_restart
+
+- name: install | Create configuration file client.properties in {{ kafka_config_dir_path }}
+  ansible.builtin.template:
+    src: templates/etc/kafka/client.properties.j2
+    dest: "{{ kafka_config_dir_path }}/client.properties"
+    owner: root
+    group: root
+    mode: u=rw-x,g=rw-x,o=r-x
+  register: kafka_client_properties_file
 
 - name: install | Create LOG4J configuration file log4j.properties in {{ kafka_config_dir_path }}
   ansible.builtin.template:
