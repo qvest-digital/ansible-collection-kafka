@@ -14,10 +14,11 @@ broker.session.timeout.ms={{ kafka_server_broker_session_timeout_ms }}
 controller.quorum.voters={% for node in kafka_controller_quorum_voters %}
 {{ node.node_id }}@{{ node.host }}:{{ node.port | default(kafka_port_client_default) }}{% if not loop.last %},{% endif %}
 {% endfor %}
-
+{% if kafka_dynamic_controller_quorum %}
 controller.quorum.bootstrap.servers={% for node in kafka_controller_quorum_voters %}
 {{ node.host }}:{{ node.port | default(kafka_port_clients_default) }}{% if not loop.last %},{% endif %}
 {% endfor %}
+{% endif %}
 {% endif %}
 
 listeners={% for l in kafka_broker_listeners + kafka_controller_listeners %}
@@ -31,6 +32,13 @@ advertised.listeners={% for l in (kafka_broker_listeners | selectattr("advertise
 {% endif %}
 
 inter.broker.listener.name={{ (kafka_broker_listeners | selectattr("is_inter_broker_listener", "equalto", true) | first).name }}
+
+{#
+The following variables must NOT be set, because they collide with what is defined
+by using listener.security.protocol.map:
+- security.inter.broker.protocol
+- security.controller.protocol
+#}
 
 #authorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer
 
@@ -136,15 +144,11 @@ log.retention.check.interval.ms={{ kafka_server_log_retention_check_interval_ms 
 client.dns.lookup={{ kafka_server_client_dns_lookup }}
 {% endif %}
 
-{% if kafka_server_sasl_enabled_mechanisms is defined %}
-sasl.enabled.mechanisms={{ kafka_server_sasl_enabled_mechanisms | join(',') }}
-{% endif %}
-{% if kafka_server_sasl_mechanism_controller_protocol is defined %}
-sasl.mechanism.controller.protocol={{ kafka_server_sasl_mechanism_controller_protocol }}
-{% endif %}
-{% if kafka_server_sasl_mechanism_inter_broker_protocol %}
-sasl.mechanism.inter.broker.protocol={{ kafka_server_sasl_mechanism_inter_broker_protocol }}
-{% endif %}
+{# TODO make this configurable #}
+sasl.enabled.mechanisms=PLAIN
+
+sasl.mechanism.controller.protocol={{ (kafka_controller_listeners | selectattr("is_control_plane_listener", "equalto", true) | first).sasl | ternary("PLAIN", "GSSAPI") }}
+sasl.mechanism.inter.broker.protocol={{ (kafka_broker_listeners | selectattr("is_inter_broker_listener", "equalto", true) | first).sasl | ternary("PLAIN", "GSSAPI") }}
 
 sasl.server.callback.handler.class=org.apache.kafka.common.security.authenticator.SaslServerCallbackHandler
 sasl.client.callback.handler.class=org.apache.kafka.common.security.authenticator.SaslClientCallbackHandler

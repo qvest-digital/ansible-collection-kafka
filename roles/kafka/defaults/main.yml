@@ -25,6 +25,8 @@ kafka_cluster_id: 'my-kafka-cluster'
 kafka_sasl_broker_username: admin
 kafka_sasl_broker_password: admin-secret
 
+kafka_dynamic_controller_quorum: false
+
 kafka_sasl_users:
   - username: alice
     password: changeme
@@ -100,13 +102,6 @@ kafka_server_log_cleanup_policy:
 kafka_server_ssl_enabled_protocols:
   - TLSv1.2
   - TLSv1.3
-
-kafka_server_sasl_enabled_mechanisms:
-  - GSSAPI
-  - PLAIN
-
-kafka_server_sasl_mechanism_inter_broker_protocol: GSSAPI
-kafka_server_sasl_mechanism_controller_protocol: GSSAPI
 
 kafka_server_background_threads: 10
 

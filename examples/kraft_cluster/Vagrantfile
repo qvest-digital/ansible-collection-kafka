@@ -48,19 +48,6 @@ Vagrant.configure("2") do |config|
               advertise: true,
               is_inter_broker_listener: true,
             },
-            {
-              name: "LOCALHOST",
-              host: 'localhost',
-              port: 19092,
-              advertise: true,
-              is_inter_broker_listener: false,
-              sasl: {
-                enabled: false,
-              },
-              ssl: {
-                enabled: false,
-              }
-            },
           ],
           kafka_controller_listeners: [
             {

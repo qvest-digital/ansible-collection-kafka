@@ -15,6 +15,9 @@ argument_specs:
           - present
           - absent
         default: present
+      kafka_dynamic_controller_quorum:
+        type: bool
+        default: false
       kafka_controller_listeners:
         type: list
         elements: dict
@@ -125,17 +128,6 @@ argument_specs:
         type: list
         elements: str
         required: true
-      kafka_server_sasl_enabled_mechanisms:
-        description: |
-          The list of SASL mechanisms enabled in the Kafka server.
-          The list may contain any mechanism for which a security provider is available.
-          Only GSSAPI is enabled by default.
-        type: list
-        elements: str
-        required: false
-      kafka_server_sasl_mechanism_inter_broker_protocol:
-        type: str
-        required: false
       kafka_controller_quorum_voters:
         description: List of Kafka controller nodes
         type: list
