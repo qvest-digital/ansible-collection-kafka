@@ -16,7 +16,7 @@ tags:
 # L(specifiers,https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification). Multiple version
 # range specifiers can be set and are separated by ','
 dependencies:
-  community.general: ">= 10.0.1"
+  community.general: ">=10.0.1"
 
 # The URL of the originating SCM repository
 repository: https://github.com/qvest-digital/ansible-collection-kafka
