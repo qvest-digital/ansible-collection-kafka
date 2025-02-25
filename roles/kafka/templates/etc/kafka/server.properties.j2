@@ -1,0 +1,155 @@
+process.roles={{ kafka_server_process_roles | join(',') }}
+node.id={{ kafka_server_node_id }}
+{% if kafka_server_broker_rack is defined and kafka_server_broker_rack != '' %}
+broker.rack={{ kafka_server_broker_rack }}
+{% endif %}
+{% if kafka_server_broker_id_generation_enable is defined %}
+broker.id.generation.enable={{ kafka_server_broker_id_generation_enable | ansible.builtin.to_json}}
+{% endif %}
+{% if kafka_server_broker_session_timeout_ms is defined %}
+broker.session.timeout.ms={{ kafka_server_broker_session_timeout_ms }}
+{% endif %}
+
+{% if kafka_controller_quorum_voters is defined %}
+controller.quorum.voters={% for node in kafka_controller_quorum_voters %}
+{{ node.node_id }}@{{ node.host }}:{{ node.port | default(kafka_port_client_default) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+controller.quorum.bootstrap.servers={% for node in kafka_controller_quorum_voters %}
+{{ node.host }}:{{ node.port | default(kafka_port_clients_default) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+{% endif %}
+
+listeners={% for l in kafka_broker_listeners + kafka_controller_listeners %}
+{{ l.name }}://{{ l.host }}:{{ l.port }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+{% if (kafka_broker_listeners | selectattr("advertise", "equalto", true)) | length > 0 %}
+advertised.listeners={% for l in (kafka_broker_listeners | selectattr("advertise", "equalto", true)) %}
+{{ l.name }}://{{ l.host }}:{{ l.port }}{% if not loop.last %},{% endif %}
+{% endfor %}
+{% endif %}
+
+inter.broker.listener.name={{ (kafka_broker_listeners | selectattr("is_inter_broker_listener", "equalto", true) | first).name }}
+
+#authorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer
+
+controller.listener.names={% for l in kafka_controller_listeners %}
+{{ l.name }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+listener.security.protocol.map={% for l in kafka_broker_listeners + kafka_controller_listeners %}
+{{ l.name }}:{{ l.ssl.enabled | ternary(l.sasl.enabled | ternary ('SASL_SSL', 'SSL'), l.sasl.enabled | ternary('SASL_PLAINTEXT', 'PLAINTEXT')) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+{# SASL mechanism: PLAIN #}
+{% for l in (kafka_broker_listeners + kafka_controller_listeners) | selectattr("sasl.enabled", "equalto", true) | selectattr("sasl.plain", "equalto", true) %}
+listener.name.{{ l.name | lower }}.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+  username="{{ kafka_sasl_broker_username }}" \
+  password="{{ kafka_sasl_broker_password }}" \
+  user_{{ kafka_sasl_broker_username }}="{{ kafka_sasl_broker_password }}";
+{% endfor %}
+
+{% if kafka_server_num_network_threads is defined %}
+num.network.threads={{ kafka_server_num_network_threads }}
+{% endif %}
+{% if kafka_server_num_io_threads is defined %}
+num.io.threads={{ kafka_server_num_io_threads }}
+{% endif %}
+{% if kafka_server_socket_send_buffer_bytes is defined %}
+socket.send.buffer.bytes={{ kafka_server_socket_send_buffer_bytes }}
+{% endif %}
+{% if kafka_server_socket_receive_buffer_bytes is defined %}
+socket.receive.buffer.bytes={{ kafka_server_socket_receive_buffer_bytes }}
+{% endif %}
+{% if kafka_server_socket_request_max_bytes is defined %}
+socket.request.max.bytes={{ kafka_server_socket_request_max_bytes }}
+{% endif %}
+log.dirs={{ kafka_server_log_dirs | join(',') }}
+{% if kafka_server_num_partitions is defined %}
+num.partitions={{ kafka_server_num_partitions }}
+{% endif %}
+{% if kafka_server_num_recovery_threads_per_data_dir is defined %}
+num.recovery.threads.per.data.dir={{ kafka_server_num_recovery_threads_per_data_dir }}
+{% endif %}
+{% if kafka_server_eligible_leader_replicas_enable is defined %}
+eligible.leader.replicas.enable={{ kafka_server_eligible_leader_replicas_enable | ansible.builtin.to_json }}
+{% endif %}
+
+{% if kafka_server_log_cleaner_enable is defined %}
+log.cleaner.enable={{ kafka_server_log_cleaner_enable | ansible.builtin.to_json }}
+{% endif %}
+{% if kafka_server_log_cleaner_threads is defined %}
+log.cleaner.threads={{ kafka_server_log_cleaner_threads }}
+{% endif %}
+{% if kafka_server_log_cleanup_policy is defined and (kafka_server_log_cleanup_policy | length) > 0 %}
+log.cleanup.policy={{ kafka_server_log_cleanup_policy | join(',') }}
+{% endif %}
+{% if kafka_server_delete_topic_enable is defined %}
+delete.topic.enable={{ kafka_server_delete_topic_enable | ansible.builtin.to_json }}
+{% endif %}
+{% if kafka_server_auto_create_topics_enable is defined %}
+auto.create.topics.enable={{ kafka_server_auto_create_topics_enable | ansible.builtin.to_json }}
+{% endif %}
+{% if kafka_server_auto_leader_rebalance_enable is defined %}
+auto.leader.rebalance.enable={{ kafka_server_auto_leader_rebalance_enable | ansible.builtin.to_json }}
+{% endif %}
+{% if kafka_server_background_threads is defined %}
+background.threads={{ kafka_server_background_threads }}
+{% endif %}
+{% if kafka_server_background_thread_interval_ms is defined %}
+{% endif %}
+{% if kafka_server_compression_type is defined %}
+compression.type={{ kafka_server_compression_type }}
+{% endif %}
+{% if kafka_server_log_cleaner_dedupe_buffer_size is defined %}
+{% endif %}
+{% if kafka_server_offsets_topic_replication_factor is defined %}
+offsets.topic.replication.factor={{ kafka_server_offsets_topic_replication_factor }}
+{% endif %}
+{% if kafka_server_transaction_state_log_replication_factor is defined %}
+transaction.state.log.replication.factor={{ kafka_server_transaction_state_log_replication_factor }}
+{% endif %}
+{% if kafka_server_transaction_state_log_min_isr is defined %}
+transaction.state.log.min.isr={{ kafka_server_transaction_state_log_min_isr }}
+{% endif %}
+{% if kafka_server_ssl_enabled_protocols is defined %}
+ssl.enabled.protocols={{ kafka_server_ssl_enabled_protocols | join(',') }}
+{% endif %}
+{% if kafka_server_log_flush_interval_messages is defined %}
+log.flush.interval.messages={{ kafka_server_log_flush_interval_messages }}
+{% endif %}
+{% if kafka_server_log_flush_interval_ms is defined %}
+log.flush.interval.ms={{ kafka_server_log_flush_interval_ms }}
+{% endif %}
+{% if kafka_server_log_retention_hours is defined %}
+log.retention.hours={{ kafka_server_log_retention_hours }}
+{% endif %}
+{% if kafka_server_log_segment_bytes is defined %}
+log.segment.bytes={{ kafka_server_log_segment_bytes }}
+{% endif %}
+{% if kafka_server_log_retention_check_interval_ms is defined %}
+log.retention.check.interval.ms={{ kafka_server_log_retention_check_interval_ms }}
+{% endif %}
+
+{% if kafka_server_client_dns_lookup is defined %}
+client.dns.lookup={{ kafka_server_client_dns_lookup }}
+{% endif %}
+
+{% if kafka_server_sasl_enabled_mechanisms is defined %}
+sasl.enabled.mechanisms={{ kafka_server_sasl_enabled_mechanisms | join(',') }}
+{% endif %}
+{% if kafka_server_sasl_mechanism_controller_protocol is defined %}
+sasl.mechanism.controller.protocol={{ kafka_server_sasl_mechanism_controller_protocol }}
+{% endif %}
+{% if kafka_server_sasl_mechanism_inter_broker_protocol %}
+sasl.mechanism.inter.broker.protocol={{ kafka_server_sasl_mechanism_inter_broker_protocol }}
+{% endif %}
+
+sasl.server.callback.handler.class=org.apache.kafka.common.security.authenticator.SaslServerCallbackHandler
+sasl.client.callback.handler.class=org.apache.kafka.common.security.authenticator.SaslClientCallbackHandler
+
+allow.everyone.if.no.acl.found=false
+
+confluent.support.metrics.enable=false
+confluent.support.customer.id=anonymous

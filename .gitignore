@@ -1,0 +1,4 @@
+.vagrant/
+/.vscode/settings.json
+/.idea/
+*.iml

@@ -1,0 +1,95 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "generic/ubuntu2204"
+
+  N = 3
+  (1..N).each do |machine_id|
+
+    name = "kafka#{machine_id}"
+    ipv4 = "192.168.205.#{100+machine_id}"
+
+    config.vm.define name do |machine|
+      machine.vm.hostname = name
+      machine.vm.network :private_network, :ip => ipv4
+      machine.vm.provider :libvirt do |v|
+        v.memory = 2048
+        v.cpus = 2
+      end
+
+      machine.vm.provision :ansible do |ansible|
+
+        ansible.playbook = "site.yml"
+
+        # create a dictionary of extra variables including the
+        # list of all kafka quorum members
+        ansible.extra_vars = {
+          kafka_java_home: "/usr/lib/jvm/java-1.17.0-openjdk-amd64",
+          kafka_cluster_id: "local-cluster",
+          kafka_server_node_id: machine_id,
+          kafka_broker_listeners: [
+            {
+              name: "INTERNAL",
+              host: ipv4,
+              port: 9092,
+              ssl: {
+                enabled: false,
+              },
+              sasl: {
+                enabled: true,
+                plain: true,
+                scram_sha_256: false,
+                scram_sha_512: false,
+              },
+              advertise: true,
+              is_inter_broker_listener: true,
+            },
+            {
+              name: "LOCALHOST",
+              host: 'localhost',
+              port: 19092,
+              advertise: true,
+              is_inter_broker_listener: false,
+              sasl: {
+                enabled: false,
+              },
+              ssl: {
+                enabled: false,
+              }
+            },
+          ],
+          kafka_controller_listeners: [
+            {
+              name: "CONTROLLER",
+              host: ipv4,
+              port: 9093,
+              ssl: {
+                enabled: false,
+              },
+              sasl: {
+                enabled: false,
+                plain: false,
+                scram_sha_256: false,
+                scram_sha_512: false,
+              },
+              is_control_plane_listener: true,
+            }
+          ],
+          kafka_controller_quorum_voters: (1..N).map do |node_id|
+            {
+              "node_id" => node_id,
+              "host" => "192.168.205.#{100+node_id}",
+              "port" => 9093,
+            }
+          end,
+        }
+
+      end
+    end
+  end
+
+end

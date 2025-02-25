@@ -1,0 +1,32 @@
+---
+- name: Prepare System
+  become: true
+  become_user: root
+  hosts: all
+  tasks:
+  - ansible.builtin.apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400
+  - ansible.builtin.apt:
+      name: acl # Needed by Ansible for setting permissions
+      state: present
+  strategy: ansible.builtin.free
+
+- name: Install Java Runtime
+  become: true
+  become_user: root
+  hosts: all
+  roles:
+    - role: geerlingguy.java
+      become: true
+  strategy: ansible.builtin.free
+
+- name: Apache Kafka
+  become: true
+  become_user: root
+  hosts: all
+  roles:
+    - role: ../../roles/kafka
+      become: true
+  strategy: ansible.builtin.linear

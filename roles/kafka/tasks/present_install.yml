@@ -1,0 +1,146 @@
+---
+- name: install | Check if Kafka is already installed
+  ansible.builtin.stat:
+    path: "{{ kafka_installation_prefix }}/bin/kafka-configs.sh"
+  register: kafka_configs_script_installed
+
+- name: install | Verify Kafka Version (prior to installation)
+  ansible.builtin.shell:
+    chdir: "{{ kafka_installation_prefix }}"
+    cmd: |
+      set -e -u
+      ./bin/kafka-configs.sh --version
+    executable: "/bin/sh"
+  changed_when: false # Just a check, so nothing has changed really.
+  register: kafka_installed_version
+  when: |-
+    kafka_configs_script_installed.stat.exists
+  failed_when: >-
+    kafka_installed_version.rc != 0
+
+- name: install | If upgrading, remove existing installation in "{{ kafka_installation_prefix }}"
+  ansible.builtin.file:
+    state: "{{ (kafka_installed_version.stdout == kafka_version) | ansible.builtin.ternary('directory', 'absent') }}"
+    path: "{{ kafka_installation_prefix }}"
+    mode: u=rw-x+X,g=r-x+X,o=r-x+X
+  when: kafka_configs_script_installed.stat.exists
+
+- name: install | Create directory {{ kafka_installation_prefix }}
+  ansible.builtin.file:
+    state: directory
+    path: "{{ kafka_installation_prefix }}"
+    owner: root
+    group: root
+    mode: u=rw-x+X,g=r-x+X,o=r-x+X
+
+- name: install | Extract Kafka package
+  ansible.builtin.unarchive:
+    dest: "{{ kafka_installation_prefix }}"
+    exclude:
+      - "kafka_{{ kafka_scala_version }}-{{ kafka_version }}/bin/windows"
+      - "kafka_{{ kafka_scala_version }}-{{ kafka_version }}/site-docs"
+      - "kafka_{{ kafka_scala_version }}-{{ kafka_version }}/logs"
+      - "kafka_{{ kafka_scala_version }}-{{ kafka_version }}/config"
+    extra_opts:
+      # See: https://unix.stackexchange.com/questions/346346/ansible-extract-without-first-directory#answer-365990
+      - '--strip-components=1'
+      - '--show-stored-names'
+    group: root
+    keep_newer: false
+    list_files: true
+    owner: root
+    remote_src: true
+    src: "{{ kafka_downloaded_package_file_path }}"
+    mode: u=rw-x+X,g=r-x+X,o=r-x+X
+  notify:
+    - kafka_restart
+
+- name: install | Create directory {{ kafka_config_dir_path }}
+  ansible.builtin.file:
+    path: "{{ kafka_config_dir_path }}"
+    owner: root
+    group: root
+    mode: u=rw-x+X,g=r-x+X,o=r-x+X
+    recurse: false
+    state: directory
+
+- name: install | Create symlink to installation prefix from {{ kafka_config_dir_path }}
+  ansible.builtin.file:
+    src: "{{ kafka_config_dir_path }}"
+    dest: "{{ kafka_installation_prefix }}/config"
+    owner: root
+    group: root
+    state: link
+
+- name: install | Create configuration file server.properties in {{ kafka_config_dir_path }}
+  ansible.builtin.template:
+    src: templates/etc/kafka/server.properties.j2
+    dest: "{{ kafka_config_dir_path }}/server.properties"
+    owner: root
+    group: root
+    mode: u=rw-x,g=rw-x,o=r-x
+  register: kafka_server_properties_file
+  notify:
+    - kafka_restart
+
+- name: install | Create LOG4J configuration file log4j.properties in {{ kafka_config_dir_path }}
+  ansible.builtin.template:
+    src: templates/etc/kafka/log4j.properties.j2
+    dest: "{{ kafka_config_dir_path }}/log4j.properties"
+    owner: root
+    group: root
+    mode: u=rw,g=rw,o=r
+  register: kafka_log4j_configuration_file
+  notify:
+    - kafka_restart
+
+- name: install | Create LOG4J configuration file tools-log4j.properties in {{ kafka_config_dir_path }}
+  ansible.builtin.template:
+    src: templates/etc/kafka/tools-log4j.properties.j2
+    dest: "{{ kafka_config_dir_path }}/tools-log4j.properties"
+    owner: root
+    group: root
+    mode: u=rw,g=rw,o=r
+
+- name: install | Verify Kafka Version (after installation)
+  ansible.builtin.shell:
+    chdir: "{{ kafka_installation_prefix }}"
+    cmd: |
+      set -e -u
+      ./bin/kafka-configs.sh --version
+    executable: "/bin/sh"
+  changed_when: false # Just a check, so nothing has changed really.
+  register: kafka_installed_version
+  failed_when: >-
+    kafka_installed_version.stdout != kafka_version
+
+- name: install | Create systemd service environment file {{ kafka_systemd_environment_file_path }}
+  ansible.builtin.template:
+    src: templates/etc/sysconfig/kafka.j2
+    dest: "{{ kafka_systemd_environment_file_path }}"
+    owner: root
+    group: root
+    mode: u=rw-x,g=rw-x,o=r-x
+  notify:
+    - kafka_restart
+
+- name: install | Create systemd service unit /lib/systemd/system/kafka.service
+  ansible.builtin.template:
+    src: templates/lib/systemd/system/kafka.service.j2
+    dest: /lib/systemd/system/kafka.service
+    owner: root
+    group: root
+    mode: u=rw-x,g=rw-x,o=r-x
+  notify:
+    - kafka_systemd_daemon_reload
+    - kafka_restart
+
+- name: install | Enable systemd service unit
+  ansible.builtin.systemd_service:
+    no_block: false
+    daemon_reload: true
+    scope: system
+    name: kafka
+    masked: false
+    enabled: true
+...

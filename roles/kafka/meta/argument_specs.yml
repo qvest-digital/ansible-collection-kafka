@@ -1,0 +1,315 @@
+---
+argument_specs:
+  main:
+    short_description: Main entrypoint for the Kafka role.
+    description:
+      - This is the main entrypoint for the Kafka role.
+      - It installs Apache Kafka on the target node.
+    author:
+      - Benjamin P. Jung
+    options:
+      kafka_state:
+        description: Desired state of the Kafka node installation
+        type: str
+        choices:
+          - present
+          - absent
+        default: present
+      kafka_controller_listeners:
+        type: list
+        elements: dict
+        options:
+          name:
+            type: str
+            required: true
+          host:
+            type: str
+            default: ''
+          port:
+            type: int
+            required: true
+          is_control_plane_listener:
+            type: bool
+            required: false
+          ssl:
+            type: dict
+            options:
+              enabled:
+                type: bool
+                required: true
+            default:
+              enabled: false
+          sasl:
+            type: dict
+            options:
+              enabled:
+                type: bool
+                required: true
+              plain:
+                type: bool
+                default: true
+              scram_sha_256:
+                type: bool
+                default: false
+              scram_sha_512:
+                type: bool
+                default: false
+            default:
+              enabled: false
+        default: []
+      kafka_broker_listeners:
+        type: list
+        elements: dict
+        options:
+          name:
+            type: str
+            required: true
+          host:
+            type: str
+            default: ''
+          port:
+            type: int
+            required: true
+          ssl:
+            type: dict
+            options:
+              enabled:
+                type: bool
+                required: true
+            default:
+              enabled: false
+          sasl:
+            type: dict
+            options:
+              enabled:
+                type: bool
+                required: true
+              plain:
+                type: bool
+                default: true
+              scram_sha_256:
+                type: bool
+                default: false
+              scram_sha_512:
+                type: bool
+                default: false
+            default:
+              enabled: false
+          is_inter_broker_listener:
+            type: bool
+            required: true
+          advertise:
+            type: bool
+            required: true
+        default: []
+      kafka_version:
+        description: Version of Apache Kafka to Install
+        type: str
+      kafka_scala_version:
+        description: Scala version used to build the distribution of Kafka to install
+        type: str
+      kafka_package_checksum:
+        description: Checksums of the Kafka package to be installed
+        type: str
+        required: false
+      kafka_console_log_output:
+        description: Where to output the console log messages
+        type: str
+        choices:
+          - stdout
+          - stderr
+          - disabled
+        default: stderr
+      kafka_server_log_dirs:
+        description: List of directories to store Kafka logs
+        type: list
+        elements: str
+        required: true
+      kafka_server_sasl_enabled_mechanisms:
+        description: |
+          The list of SASL mechanisms enabled in the Kafka server.
+          The list may contain any mechanism for which a security provider is available.
+          Only GSSAPI is enabled by default.
+        type: list
+        elements: str
+        required: false
+      kafka_server_sasl_mechanism_inter_broker_protocol:
+        type: str
+        required: false
+      kafka_controller_quorum_voters:
+        description: List of Kafka controller nodes
+        type: list
+        elements: dict
+        options:
+          node_id:
+            description: The node ID associated with the roles this process is playing
+            type: int
+            required: true
+          host:
+            description: Hostname or IP address of the Kafka controller node
+            type: str
+            required: true
+          port:
+            description: Port of the Kafka controller node
+            type: int
+            required: false
+        required: false
+      kafka_net_prefer_ipv4_stack:
+        description: |
+          Prefer IPv4 stack over IPv6 stack.
+          This is useful when the system has both IPv4 and IPv6 stacks enabled.
+          Internally, `-Djava.net.preferIPv4Stack=true` will be set, if this value
+          is set to `true`.
+        type: bool
+        required: true
+      kafka_java_home:
+        description: Home of the Java runtime used to run Kafka, defaults to the system default if unset
+        type: str
+        required: false
+      kafka_memory_initial_heap_size:
+        type: str
+        required: true
+      kafka_memory_maximum_heap_size:
+        type: str
+        required: true
+      kafka_system_group_name:
+        description: Name of the POSIX system group to be used
+        type: str
+        default: kafka
+      kafka_system_user_name:
+        description: Name of the POSIX system user to be used
+        type: str
+        default: kafka
+      kafka_cluster_id:
+        description: Unique identifier for the Kafka cluster
+        type: str
+        required: true
+      kafka_server_client_dns_lookup:
+        description: |
+          Controls how the client uses DNS lookups.
+          If set to use_all_dns_ips, connect to each returned IP address in sequence
+          until a successful connection is established. After a disconnection, the
+          next IP is used. Once all IPs have been used once, the client resolves the
+          IP(s) from the hostname again (both the JVM and the OS cache DNS name
+          lookups, however).
+          If set to resolve_canonical_bootstrap_servers_only, resolve each bootstrap
+          address into a list of canonical names. After the bootstrap phase, this
+          behaves the same as use_all_dns_ips.
+        type: str
+        choices:
+          - use_all_dns_ips
+          - resolve_canonical_bootstrap_servers_only
+        required: false
+      kafka_server_process_roles:
+        description: List of roles for Kafka server processes to assume
+        type: list
+        elements: str
+        default:
+          - broker
+          - controller
+      kafka_server_log_cleaner_enable:
+        type: bool
+        required: false
+      kafka_server_log_cleaner_threads:
+        type: int
+        required: false
+      kafka_server_log_cleanup_policy:
+        type: list
+        elements: str
+        default:
+          - compact
+          - delete
+      kafka_server_ssl_enabled_protocols:
+        description: List of SSL/TLS protocols to enable for Kafka server
+        type: list
+        elements: str
+        default:
+          - TLSv1.2
+          - TLSv1.3
+      kafka_server_socket_send_buffer_bytes:
+        type: int
+        required: false
+      kafka_server_socket_receive_buffer_bytes:
+        type: int
+        required: false
+      kafka_server_transaction_state_log_min_isr:
+        type: int
+        required: false
+      kafka_server_socket_request_max_bytes:
+        type: int
+        required: false
+      kafka_server_broker_rack:
+        type: str
+        required: false
+      kafka_server_broker_id_generation_enable:
+        type: bool
+        required: false
+      kafka_server_broker_session_timeout_ms:
+        type: int
+        required: false
+      kafka_server_num_partitions:
+        type: int
+        default: 1
+      kafka_server_num_network_threads:
+        type: int
+        default: 3
+      kafka_server_num_io_threads:
+        description: |
+          The number of threads that the server uses for processing requests,
+          which may include disk I/O
+        type: int
+        default: 8
+      kafka_server_auto_create_topics_enable:
+        type: bool
+        required: false
+      kafka_server_delete_topic_enable:
+        type: bool
+        required: false
+      kafka_server_auto_leader_rebalance_enable:
+        description: |
+          Enables auto leader balancing.
+          A background thread checks the distribution of partition leaders at regular intervals,
+          configurable by leader.imbalance.check.interval.seconds.
+          If the leader imbalance exceeds leader.imbalance.per.broker.percentage,
+          leader rebalance to the preferred leader for partitions is triggered.
+        type: bool
+        required: false
+      kafka_server_background_threads:
+        description: The number of threads to use for various background processing tasks
+
+        type: int
+        required: false
+      kafka_server_compression_type:
+        description: |
+          Specify the final compression type for a given topic.
+          This configuration accepts the standard compression codecs ('gzip', 'snappy', 'lz4', 'zstd').
+          It additionally accepts 'uncompressed' which is equivalent to no compression;
+          and 'producer' which means retain the original compression codec set by the producer.
+        type: str
+        choices:
+        - uncompressed
+        - producer
+        - gzip
+        - snappy
+        - lz4
+        - zstd
+        required: false
+      kafka_server_eligible_leader_replicas_enable:
+        description: Enable the Eligible leader replicas
+        type: bool
+        required: false
+      kafka_server_sasl_mechanism_controller_protocol:
+        description: SASL mechanism used for communication with controllers. Default is GSSAPI.
+        type: str
+        required: false
+      kafka_log4j_root_level:
+        description: Root log level
+        type: str
+        choices:
+          - FATAL
+          - ERROR
+          - WARN
+          - INFO
+          - DEBUG
+          - TRACE
+        default: INFO

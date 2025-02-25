@@ -1,0 +1,4 @@
+KAFKA_CLUSTER_ID={{ kafka_cluster_id }}
+KAFKA_LOG4J_OPTS=-Dlog4j.configuration=file:{{ kafka_log4j_configuration_file.dest }}
+KAFKA_HEAP_OPTS=-Xmx{{ kafka_memory_maximum_heap_size }} -Xms{{ kafka_memory_initial_heap_size }}
+KAFKA_GC_LOG_OPTS=-Dnogclog

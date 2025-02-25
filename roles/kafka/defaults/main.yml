@@ -1,0 +1,117 @@
+---
+kafka_state: present
+
+kafka_cache_download_path: /var/tmp/ansible-downloads/kafka
+
+kafka_installation_prefix: /opt/kafka
+
+kafka_version: '3.9.0'
+kafka_scala_version: '2.13'
+
+# kafka_java_home: /usr/local/lib/jvm/custom-java-runtime
+
+kafka_server_client_dns_lookup: use_all_dns_ips
+
+kafka_memory_initial_heap_size: '1G'
+kafka_memory_maximum_heap_size: '1G'
+
+kafka_console_log_output: 'stderr'
+
+# Best to be generated with `kafka-storage.sh random-uuid`
+# Can be set to an empty string to automatically generate a UUID
+# or leave an existing cluster ID unchanged.
+kafka_cluster_id: 'my-kafka-cluster'
+
+kafka_sasl_broker_username: admin
+kafka_sasl_broker_password: admin-secret
+
+kafka_sasl_users:
+  - username: alice
+    password: changeme
+  - username: bon
+    password: notasecret
+
+kafka_controller_listeners:
+  - name: CONTROLLER
+    host: localhost
+    port: 9093
+    is_control_plane_listener: true
+    ssl:
+      enabled: false
+    sasl:
+      enabled: false
+      plain: true
+      scram_sha_256: true
+
+kafka_broker_listeners:
+  - name: BROKER
+    host: localhost
+    port: 9092
+    advertise: true
+    is_inter_broker_listener: true
+    ssl:
+      enabled: false
+    sasl:
+      enabled: false
+      plain: true
+      scram_sha_256: true
+
+# If kafka_server_process_roles contains 'controller', this
+# specifies the list of Kafka controllers in the cluster to connect to.
+kafka_controller_quorum_voters:
+  - node_id: 1
+    host: localhost
+    port: 9093
+
+kafka_system_group_name: kafka
+kafka_system_user_name: kafka
+
+kafka_net_prefer_ipv4_stack: false
+
+kafka_server_process_roles:
+  - broker
+  - controller
+kafka_server_node_id: 1
+
+kafka_server_broker_rack: 'rack1'
+
+kafka_server_log_dirs:
+  - /var/lib/kafka/kraft-combined-logs
+
+kafka_server_delete_topic_enable: true
+kafka_server_auto_create_topics_enable: true
+kafka_server_auto_leader_rebalance_enable: true
+kafka_server_eligible_leader_replicas_enable: false
+
+kafka_server_num_network_threads: 3
+kafka_server_num_io_threads: 8
+kafka_server_socket_send_buffer_bytes: 102400
+kafka_server_socket_receive_buffer_bytes: 102400
+kafka_server_socket_request_max_bytes: 104857600
+kafka_server_num_partitions: 1
+kafka_server_num_recovery_threads_per_data_dir: 1
+kafka_server_log_retention_hours: 168
+kafka_server_transaction_state_log_min_isr: 1
+kafka_server_log_cleaner_enable: true
+kafka_server_log_cleaner_threads: 1
+kafka_server_log_cleanup_policy:
+  - delete
+
+kafka_server_ssl_enabled_protocols:
+  - TLSv1.2
+  - TLSv1.3
+
+kafka_server_sasl_enabled_mechanisms:
+  - GSSAPI
+  - PLAIN
+
+kafka_server_sasl_mechanism_inter_broker_protocol: GSSAPI
+kafka_server_sasl_mechanism_controller_protocol: GSSAPI
+
+kafka_server_background_threads: 10
+
+kafka_server_compression_type: producer
+
+# Logging configuration options
+kafka_log4j_root_level: INFO
+...
