@@ -1,3 +1,8 @@
+##
+# {{ ansible_managed }}
+
+{% set kafka_inter_broker_listener = kafka_listeners | selectattr('type', 'equalto', 'broker') | selectattr('name', 'equalto', kafka_listener_name_inter_broker) | first -%}
+
 bootstrap.controllers={% for node in kafka_controller_quorum_voters %}
 {{ node.host }}:{{ node.port | default(kafka_port_controller_default) }}{% if not loop.last %},{% endif %}
 {% endfor %}
@@ -7,7 +12,7 @@ bootstrap.servers={% for node in kafka_controller_quorum_voters %}
 {% endfor %}
 
 {% if kafka_server_client_dns_lookup is defined %}
-client.dns.lookup={{ kafka_server_client_dns_lookup }}
+client.dns.lookup={{ kafka_client_dns_lookup }}
 {% endif %}
 
 client.id=server-{{ kafka_server_node_id }}-client
@@ -15,6 +20,14 @@ client.id=server-{{ kafka_server_node_id }}-client
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=PLAIN
 
+{# TODO Determine security protocol used by `kafka_inter_broker_listener` and decide whether to enable this #}
 sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
   username="{{ kafka_sasl_broker_username }}" \
   password="{{ kafka_sasl_broker_password }}";
+
+{% if kafka_client_extra_properties is defined and kafka_client_extra_properties | length > 0 %}
+# Extra Properties
+{% for prop in kafka_client_extra_properties | sort(attribute='key') %}
+{{ prop.key }}={{ prop.value is boolean | ternary(prop.value | to_json, prop.value) }}
+{% endfor %}
+{% endif %}

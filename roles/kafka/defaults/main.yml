@@ -10,7 +10,7 @@ kafka_scala_version: '2.13'
 
 # kafka_java_home: /usr/local/lib/jvm/custom-java-runtime
 
-kafka_server_client_dns_lookup: use_all_dns_ips
+kafka_client_dns_lookup: use_all_dns_ips
 
 kafka_memory_initial_heap_size: '1G'
 kafka_memory_maximum_heap_size: '1G'
@@ -44,19 +44,37 @@ kafka_controller_listeners:
       enabled: false
       plain: true
       scram_sha_256: true
+      scram_sha_512: true
 
-kafka_broker_listeners:
-  - name: BROKER
+## TODO Add support for additional advertised listener addresses.
+
+kafka_listeners:
+  - name: CONTROLLER
     host: localhost
-    port: 9092
-    advertise: true
-    is_inter_broker_listener: true
+    port: 9093
+    type: controller
     ssl:
       enabled: false
     sasl:
       enabled: false
       plain: true
       scram_sha_256: true
+      scram_sha_512: true
+  - name: BROKER
+    host: localhost
+    port: 9092
+    type: broker
+    advertise: true
+    ssl:
+      enabled: false
+    sasl:
+      enabled: false
+      plain: true
+      scram_sha_256: true
+      scram_sha_512: true
+
+kafka_listener_name_inter_broker: BROKER
+kafka_listener_name_controller_quorum: CONTROLLER
 
 # If kafka_server_process_roles contains 'controller', this
 # specifies the list of Kafka controllers in the cluster to connect to.
@@ -75,7 +93,11 @@ kafka_server_process_roles:
   - controller
 kafka_server_node_id: 1
 
-kafka_server_broker_rack: 'rack1'
+# Optional
+# Rack of the broker.
+# This will be used in rack aware replication assignment for fault tolerance. Examples: RACK1, us-east-1d
+# See https://kafka.apache.org/documentation/#brokerconfigs_broker.rack
+#kafka_server_broker_rack: 'rack1'
 
 kafka_server_log_dirs:
   - /var/lib/kafka/kraft-combined-logs
@@ -97,6 +119,7 @@ kafka_server_transaction_state_log_min_isr: 1
 kafka_server_log_cleaner_enable: true
 kafka_server_log_cleaner_threads: 1
 kafka_server_log_cleanup_policy:
+  - compact
   - delete
 
 kafka_server_ssl_enabled_protocols:
@@ -109,4 +132,10 @@ kafka_server_compression_type: producer
 
 # Logging configuration options
 kafka_log4j_root_level: INFO
+
+kafka_server_extra_properties:
+- key: confluent.support.metrics.enable
+  value: false
+- key: confluent.support.customer.id
+  value: "anonymous"
 ...

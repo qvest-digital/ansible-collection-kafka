@@ -1,3 +1,6 @@
+##
+# {{ ansible_managed }}
+
 log4j.rootLogger={{ kafka_log4j_root_level }}, {% if kafka_console_log_output != 'disabled' %}{{ kafka_console_log_output }}, {% endif %}kafkaAppender
 
 log4j.appender.stdout=org.apache.log4j.ConsoleAppender

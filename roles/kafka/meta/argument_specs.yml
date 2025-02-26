@@ -18,7 +18,7 @@ argument_specs:
       kafka_dynamic_controller_quorum:
         type: bool
         default: false
-      kafka_controller_listeners:
+      kafka_listeners:
         type: list
         elements: dict
         options:
@@ -31,15 +31,19 @@ argument_specs:
           port:
             type: int
             required: true
-          is_control_plane_listener:
-            type: bool
-            required: false
+          type:
+            description: Type of listener.
+            type: str
+            default: broker
+            choices:
+              - broker
+              - controller
           ssl:
             type: dict
             options:
               enabled:
                 type: bool
-                required: true
+                default: false
             default:
               enabled: false
           sasl:
@@ -47,7 +51,7 @@ argument_specs:
             options:
               enabled:
                 type: bool
-                required: true
+                default: false
               plain:
                 type: bool
                 default: true
@@ -59,52 +63,20 @@ argument_specs:
                 default: false
             default:
               enabled: false
-        default: []
-      kafka_broker_listeners:
-        type: list
-        elements: dict
-        options:
-          name:
-            type: str
-            required: true
-          host:
-            type: str
-            default: ''
-          port:
-            type: int
-            required: true
-          ssl:
-            type: dict
-            options:
-              enabled:
-                type: bool
-                required: true
-            default:
-              enabled: false
-          sasl:
-            type: dict
-            options:
-              enabled:
-                type: bool
-                required: true
-              plain:
-                type: bool
-                default: true
-              scram_sha_256:
-                type: bool
-                default: false
-              scram_sha_512:
-                type: bool
-                default: false
-            default:
-              enabled: false
-          is_inter_broker_listener:
-            type: bool
-            required: true
           advertise:
             type: bool
-            required: true
+            default: false
         default: []
+      kafka_listener_name_inter_broker:
+        description: |
+          Name of the listener for inter-broker communication.
+        type: str
+        required: true
+      kafka_listener_name_controller_quorum:
+        description: |
+            Name of the listener for controller quorum communication.
+        type: str
+        required: true
       kafka_version:
         description: Version of Apache Kafka to Install
         type: str
@@ -176,7 +148,7 @@ argument_specs:
         description: Unique identifier for the Kafka cluster
         type: str
         required: true
-      kafka_server_client_dns_lookup:
+      kafka_client_dns_lookup:
         description: |
           Controls how the client uses DNS lookups.
           If set to use_all_dns_ips, connect to each returned IP address in sequence
@@ -305,3 +277,25 @@ argument_specs:
           - DEBUG
           - TRACE
         default: INFO
+      kafka_server_extra_properties:
+        description: Additional properties to be added to the server.properties file
+        type: list
+        elements: dict
+        options:
+          key:
+            type: str
+            required: true
+          value:
+            required: true
+        required: false
+      kafka_client_extra_properties:
+        description: Additional properties to be added to the client.properties file
+        type: list
+        elements: dict
+        options:
+          key:
+            type: str
+            required: true
+          value:
+            required: true
+        required: false

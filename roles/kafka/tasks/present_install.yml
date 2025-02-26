@@ -103,6 +103,15 @@
     mode: u=rw-x,g=rw-x,o=r-x
   register: kafka_client_properties_file
 
+- name: install | Create configuration file controller.properties in {{ kafka_config_dir_path }}
+  ansible.builtin.template:
+    src: templates/etc/kafka/controller.properties.j2
+    dest: "{{ kafka_config_dir_path }}/controller.properties"
+    owner: root
+    group: root
+    mode: u=rw-x,g=rw-x,o=r-x
+  register: kafka_controller_properties_file
+
 - name: install | Create LOG4J configuration file log4j.properties in {{ kafka_config_dir_path }}
   ansible.builtin.template:
     src: templates/etc/kafka/log4j.properties.j2

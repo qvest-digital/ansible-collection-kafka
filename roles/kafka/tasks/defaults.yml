@@ -15,8 +15,10 @@
 
 - name: defaults | Set required variables without defaults.
   ansible.builtin.set_fact:
-    "{{ item }}": "{{ lookup('ansible.builtin.vars', item, default=lookup('ansible.builtin.vars', item + '_default')) }}"
+    "{{ fact_name }}": "{{ lookup('ansible.builtin.vars', fact_name, default=lookup('ansible.builtin.vars', fact_name + '_default')) }}"
   loop:
     - kafka_java_home
+  loop_control:
+    loop_var: fact_name
   tags:
     - skip_ansible_lint # Using a Jinja2 expression as key is exactly what we want here.

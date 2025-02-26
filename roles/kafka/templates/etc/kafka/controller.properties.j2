@@ -1,0 +1,24 @@
+##
+# {{ ansible_managed }}
+# The purpose of this configuration file is to be used as `command-config` for the `kafka-metadata-quorum.sh` tool
+# when adding or removing controllers dynamically.
+# See https://kafka.apache.org/39/documentation.html#kraft_reconfig
+
+{% set kafka_controller_listener = kafka_listeners | selectattr('type', 'equalto', 'controller') | selectattr('name', 'equalto', kafka_listener_name_controller_quorum) | first -%}
+
+bootstrap.controllers={% for node in kafka_controller_quorum_voters %}
+{{ node.host }}:{{ node.port | default(kafka_port_controller_default) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+bootstrap.servers={% for node in kafka_controller_quorum_voters %}
+{{ node.host }}:{{ node.port | default(kafka_port_clients_default) }}{% if not loop.last %},{% endif %}
+{% endfor %}
+
+{# TODO Determine security protocol used by `kafka_controller_listener` and decide whether to enable this #}
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=PLAIN
+
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+  username="{{ kafka_sasl_broker_username }}" \
+  password="{{ kafka_sasl_broker_password }}";
+{# END_TODO #}

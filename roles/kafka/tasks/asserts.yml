@@ -9,6 +9,20 @@
     that:
       - kafka_scala_version is ansible.builtin.match('^(?P<major>\d+)\.(?P<minor>\d+)$')
 
+- name: asserts | Option kafka_listeners (names must be unique)
+  assert:
+    that: (kafka_listeners | map(attribute='name') | length) == (kafka_listeners | map(attribute='name') | unique | length)
+    fail_msg: "Listener names must be unique."
+
+- name: asserts | Option kafka_listeners (controllers cannot be advertised)
+  ansible.builtin.assert:
+    that:
+      - not (listener.type == 'controller' and listener.advertise is defined and listener.advertise == True)
+    fail_msg: "Controller listener (name=\"{{ listener.name }}\") cannot be advertised."
+  loop: "{{ kafka_listeners }}"
+  loop_control:
+    loop_var: listener
+
 - name: asserts | Option kafka_system_group_name
   ansible.builtin.assert:
     that:
