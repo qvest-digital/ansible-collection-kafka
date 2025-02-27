@@ -45,9 +45,9 @@ Vagrant.configure("2") do |config|
               name: BROKER_LISTENER_NAME,
               host: ipv4,
               port: PORT_CLIENTS,
+              protocol: "SASL_PLAINTEXT",
               type: "broker",
               sasl: {
-                enabled: true,
                 plain: true,
                 scram_sha_256: false,
                 scram_sha_512: false,
@@ -58,9 +58,9 @@ Vagrant.configure("2") do |config|
               name: CONTROLLER_LISTENER_NAME,
               host: ipv4,
               port: PORT_CONTROL_PLANE,
+              protocol: "SASL_PLAINTEXT",
               type: "controller",
               sasl: {
-                enabled: true,
                 plain: true,
                 scram_sha_256: false,
                 scram_sha_512: false,

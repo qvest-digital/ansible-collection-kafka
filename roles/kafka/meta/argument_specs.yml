@@ -38,20 +38,22 @@ argument_specs:
             choices:
               - broker
               - controller
+          protocol:
+            description: Protocol used by the listener.
+            type: str
+            default: PLAINTEXT
+            choices:
+              - PLAINTEXT
+              - SSL
+              - SASL_PLAINTEXT
+              - SASL_SSL
           ssl:
             type: dict
-            options:
-              enabled:
-                type: bool
-                default: false
-            default:
-              enabled: false
+            options: {}
+            default: {}
           sasl:
             type: dict
             options:
-              enabled:
-                type: bool
-                default: false
               plain:
                 type: bool
                 default: true
@@ -61,8 +63,7 @@ argument_specs:
               scram_sha_512:
                 type: bool
                 default: false
-            default:
-              enabled: false
+            default: {}
           advertise:
             type: bool
             default: false

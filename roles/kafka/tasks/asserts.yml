@@ -23,6 +23,19 @@
   loop_control:
     loop_var: listener
 
+- name: asserts | Option kafka_listener_name_controller_quorum
+  ansible.builtin.assert:
+    that:
+      - kafka_listeners | selectattr('name', 'equalto', kafka_listener_name_controller_quorum) | selectattr('type', 'equalto', 'controller') | length == 1
+    fail_msg: "Listener named \"{{ kafka_listener_name_controller_quorum }}\" must be of kind \"controller\"."
+
+- name: asserts | Option kafka_listener_name_inter_broker
+  ansible.builtin.assert:
+    that:
+      - kafka_listeners | selectattr('name', 'equalto', kafka_listener_name_inter_broker) | selectattr('type', 'equalto', 'broker') | length == 1
+    fail_msg: "Listener named \"{{ kafka_listener_name_inter_broker }}\" must be of kind \"broker\"."
+
+
 - name: asserts | Option kafka_system_group_name
   ansible.builtin.assert:
     that:

@@ -8,8 +8,6 @@
 {% set kafka_controller_listener_names = [kafka_listener_name_controller_quorum] + (kafka_controller_listeners | rejectattr('name', 'equalto', kafka_listener_name_controller_quorum) | map(attribute='name')) -%}
 {% set kafka_advertised_listeners = kafka_broker_listeners | selectattr('advertise', 'equalto', true) -%}
 {% for l in kafka_listeners %}
-{% if not 'ssl' in l %}{%- set _ = l.update({'ssl': { 'enabled': False }}) -%}{% endif -%}
-{% if not 'sasl' in l %}{%- set _ = l.update({'sasl': { 'enabled': False }}) -%}{% endif -%}
 {% endfor -%}
 
 process.roles={{ kafka_server_process_roles | join(',') }}
@@ -65,11 +63,11 @@ it is automatically set to the FIRST entry in the list of controller.listener.na
 controller.listener.names={{ kafka_controller_listener_names | join(',') }}
 
 listener.security.protocol.map={% for l in kafka_listeners %}
-{{ l.name }}:{{ l.ssl.enabled | ternary(l.sasl.enabled | ternary ('SASL_SSL', 'SSL'), l.sasl.enabled | ternary('SASL_PLAINTEXT', 'PLAINTEXT')) }}{% if not loop.last %},{% endif %}
+{{ l.name }}:{{ l.protocol }}{% if not loop.last %},{% endif %}
 {% endfor %}
 
 {# SASL mechanism: PLAIN #}
-{% for l in (kafka_broker_listeners + kafka_controller_listeners) | selectattr("sasl.enabled", "equalto", true) | selectattr("sasl.plain", "equalto", true) %}
+{% for l in (kafka_broker_listeners + kafka_controller_listeners) | selectattr("protocol", "equalto", "SASL_PLAINTEXT") | selectattr("sasl.plain", "equalto", true) %}
 listener.name.{{ l.name | lower }}.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
   username="{{ kafka_sasl_broker_username }}" \
   password="{{ kafka_sasl_broker_password }}" \
