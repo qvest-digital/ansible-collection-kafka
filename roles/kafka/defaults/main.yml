@@ -39,27 +39,17 @@ kafka_listeners:
     port: 9093
     type: controller
     protocol: PLAINTEXT
-    ssl: {}
-    sasl:
-      plain: true
-      scram_sha_256: false
-      scram_sha_512: false
+    sasl_mode: PLAIN
   - name: BROKER
     host: localhost
     port: 9092
     type: broker
     protocol: PLAINTEXT
     advertise: true
-    ssl: {}
-    sasl:
-      plain: true
-      scram_sha_256: false
-      scram_sha_512: false
+    sasl_mode: PLAIN
 
 kafka_listener_name_inter_broker: BROKER
 kafka_listener_name_controller_quorum: CONTROLLER
-
-## TODO Add support for additional advertised listener addresses.
 
 # If kafka_server_process_roles contains 'controller', this
 # specifies the list of Kafka controllers in the cluster to connect to.

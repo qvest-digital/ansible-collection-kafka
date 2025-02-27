@@ -1,12 +1,25 @@
 ##
 # {{ ansible_managed }}
 
+{#
+NOTES to self:
+
+The following variables must NOT be set, because they collide with what is defined
+by using listener.security.protocol.map:
+- security.inter.broker.protocol
+- security.controller.protocol
+
+The name of the control plane listener should not be set in KRaft mode, because
+it is automatically set to the FIRST entry in the list of controller.listener.names.
+- control.plane.listener.name
+#}
+
 {% set _is_controller = 'controller' in kafka_server_process_roles -%}
 {% set _is_broker = 'broker' in kafka_server_process_roles -%}
 {% set kafka_controller_listeners = kafka_listeners | selectattr('type', 'equalto', 'controller') -%}
 {% set kafka_broker_listeners = kafka_listeners | selectattr('type', 'equalto', 'broker') -%}
 {% set kafka_controller_listener_names = [kafka_listener_name_controller_quorum] + (kafka_controller_listeners | rejectattr('name', 'equalto', kafka_listener_name_controller_quorum) | map(attribute='name')) -%}
-{% set kafka_advertised_listeners = kafka_broker_listeners | selectattr('advertise', 'equalto', true) -%}
+{% set kafka_advertised_listeners = (kafka_broker_listeners | selectattr('advertise', 'equalto', true)) -%}
 {% for l in kafka_listeners %}
 {% endfor -%}
 
@@ -39,24 +52,11 @@ listeners={% for l in kafka_listeners %}
 
 {% if (kafka_broker_listeners | selectattr("advertise", "equalto", true)) | length > 0 %}
 advertised.listeners={% for l in kafka_advertised_listeners %}
-{{ l.name }}://{{ l.host }}:{{ l.port }}{% if not loop.last %},{% endif %}
+{{ l.name }}://{{ l.advertised_host | default(l.host) }}:{{ l.advertised_port | default(l.port) }}{% if not loop.last %},{% endif %}
 {% endfor %}
 {% endif %}
 
 inter.broker.listener.name={{ kafka_listener_name_inter_broker }}
-
-{#
-NOTES to self:
-
-The following variables must NOT be set, because they collide with what is defined
-by using listener.security.protocol.map:
-- security.inter.broker.protocol
-- security.controller.protocol
-
-The name of the control plane listener should not be set in KRaft mode, because
-it is automatically set to the FIRST entry in the list of controller.listener.names.
-- control.plane.listener.name
-#}
 
 #authorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer
 
@@ -67,7 +67,7 @@ listener.security.protocol.map={% for l in kafka_listeners %}
 {% endfor %}
 
 {# SASL mechanism: PLAIN #}
-{% for l in (kafka_broker_listeners + kafka_controller_listeners) | selectattr("protocol", "equalto", "SASL_PLAINTEXT") | selectattr("sasl.plain", "equalto", true) %}
+{% for l in (kafka_broker_listeners + kafka_controller_listeners) | selectattr("protocol", "in", ["SASL_PLAINTEXT", "SASL_SSL"]) | selectattr("sasl_mechanism", "equalto", "PLAIN") %}
 listener.name.{{ l.name | lower }}.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
   username="{{ kafka_sasl_broker_username }}" \
   password="{{ kafka_sasl_broker_password }}" \
@@ -160,8 +160,8 @@ log.retention.check.interval.ms={{ kafka_server_log_retention_check_interval_ms 
 {# TODO make this configurable #}
 sasl.enabled.mechanisms=PLAIN
 
-sasl.mechanism.controller.protocol={{ (kafka_controller_listeners | selectattr("name", "equalto", kafka_listener_name_controller_quorum) | first).sasl | ternary("PLAIN", "GSSAPI") }}
-sasl.mechanism.inter.broker.protocol={{ (kafka_broker_listeners | selectattr("name", "equalto", kafka_listener_name_inter_broker) | first).sasl | ternary("PLAIN", "GSSAPI") }}
+sasl.mechanism.controller.protocol={{ (kafka_controller_listeners | selectattr("name", "equalto", kafka_listener_name_controller_quorum) | first).sasl_mechanism }}
+sasl.mechanism.inter.broker.protocol={{ (kafka_broker_listeners | selectattr("name", "equalto", kafka_listener_name_inter_broker) | first).sasl_mechanism }}
 
 sasl.server.callback.handler.class=org.apache.kafka.common.security.authenticator.SaslServerCallbackHandler
 sasl.client.callback.handler.class=org.apache.kafka.common.security.authenticator.SaslClientCallbackHandler

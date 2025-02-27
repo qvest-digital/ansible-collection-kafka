@@ -47,26 +47,24 @@ argument_specs:
               - SSL
               - SASL_PLAINTEXT
               - SASL_SSL
-          ssl:
-            type: dict
-            options: {}
-            default: {}
-          sasl:
-            type: dict
-            options:
-              plain:
-                type: bool
-                default: true
-              scram_sha_256:
-                type: bool
-                default: false
-              scram_sha_512:
-                type: bool
-                default: false
-            default: {}
+          sasl_mechanism:
+            description: SASL mode used by the listener.
+            type: str
+            default: PLAIN
+            choices:
+              - GSSAPI
+              - PLAIN
+              - SCRAM-SHA-256
+              - SCRAM-SHA-512
           advertise:
             type: bool
             default: false
+          advertised_host:
+            type: str
+            required: false
+          advertised_port:
+            type: int
+            required: false
         default: []
       kafka_listener_name_inter_broker:
         description: |
