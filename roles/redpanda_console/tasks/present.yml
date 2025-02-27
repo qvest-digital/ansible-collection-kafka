@@ -1,0 +1,13 @@
+---
+- name: Download Red Panda Console
+  ansible.builtin.import_tasks:
+    file: present_download.yml
+  tags:
+    - always
+
+- name: Install Red Panda Console
+  ansible.builtin.import_tasks:
+    file: present_install.yml
+  tags:
+    - always
+...

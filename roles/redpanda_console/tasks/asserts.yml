@@ -1,0 +1,18 @@
+---
+- name: asserts | Supported OS Family
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family in [ 'Debian', 'RedHat' ]
+    msg: "Unsupported OS family '{{ ansible_os_family }}'"
+
+- name: asserts | Supported OS Architecture
+  ansible.builtin.assert:
+    that:
+      - ansible_architecture in [ 'x86_64' ]
+    msg: "Unsupported OS architecture '{{ ansible_architecture }}'"
+
+- name: asserts | Option redpanda_console_version
+  ansible.builtin.assert:
+    that:
+      - redpanda_console_version is ansible.builtin.match('^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)$')
+...
