@@ -51,7 +51,7 @@ Vagrant.configure("2") do |config|
               protocol: "PLAINTEXT",
               type: "broker",
               advertise: true,
-              advertised_host: "localhost",
+              advertised_host: "127.0.0.1",
               advertised_port: local_forwarded_client_port,
             },
             {
