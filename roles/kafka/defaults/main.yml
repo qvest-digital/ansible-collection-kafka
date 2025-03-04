@@ -39,14 +39,15 @@ kafka_listeners:
     port: 9093
     type: controller
     protocol: PLAINTEXT
-    sasl_mode: PLAIN
+    sasl_mechanism: PLAIN
+
   - name: BROKER
     host: localhost
     port: 9092
     type: broker
     protocol: PLAINTEXT
     advertise: true
-    sasl_mode: PLAIN
+    sasl_mechanism: PLAIN
 
 kafka_listener_name_inter_broker: BROKER
 kafka_listener_name_controller_quorum: CONTROLLER
