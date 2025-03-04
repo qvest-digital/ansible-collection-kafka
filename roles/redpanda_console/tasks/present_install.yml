@@ -9,7 +9,7 @@
 
 - name: Install DEB package.
   ansible.builtin.apt:
-    name: "{{ redpanda_console_package_download_result.dest }}"
+    deb: "{{ redpanda_console_package_download_result.dest }}"
     state: present
     allow_downgrade: true
   when: redpanda_console_package_format_file_suffix == 'deb'

@@ -10,13 +10,21 @@ CONTROLLER_LISTENER_NAME = 'CONTROLLER'
 PORT_CONTROL_PLANE = 9093
 PORT_INTER_BROKER = 9094
 PORT_CLIENTS = 9092
+PORT_REDPANDA_CONSOLE = 8080
+
+KAFKA_NODES_COUNT = 3
+
+ansible_groups = {
+  "kafka" => (1..KAFKA_NODES_COUNT).map { |i| "kafka#{i}" },
+  "management" => ["management"]
+}
 
 Vagrant.configure("2") do |config|
 
   config.vm.box = "generic/ubuntu2204"
 
-  N = 3
-  (1..N).each do |machine_id|
+  # Kafka nodes
+  (1..KAFKA_NODES_COUNT).each do |machine_id|
 
     local_forwarded_client_port = PORT_CLIENTS + machine_id * 10000
 
@@ -36,6 +44,7 @@ Vagrant.configure("2") do |config|
       machine.vm.provision :ansible do |ansible|
 
         ansible.playbook = "site.yml"
+        ansible.groups = ansible_groups
 
         # create a dictionary of extra variables including the
         # list of all kafka quorum members
@@ -51,8 +60,8 @@ Vagrant.configure("2") do |config|
               protocol: "PLAINTEXT",
               type: "broker",
               advertise: true,
-              advertised_host: "127.0.0.1",
-              advertised_port: local_forwarded_client_port,
+#              advertised_host: "127.0.0.1",
+#              advertised_port: local_forwarded_client_port,
             },
             {
               name: BROKER_LISTENER_NAME,
@@ -74,7 +83,7 @@ Vagrant.configure("2") do |config|
           ],
           kafka_listener_name_inter_broker: BROKER_LISTENER_NAME,
           kafka_listener_name_controller_quorum: CONTROLLER_LISTENER_NAME,
-          kafka_controller_quorum_voters: (1..N).map do |node_id|
+          kafka_controller_quorum_voters: (1..KAFKA_NODES_COUNT).map do |node_id|
             {
               "node_id" => node_id,
               "host" => "192.168.205.#{100+node_id}",
@@ -87,4 +96,30 @@ Vagrant.configure("2") do |config|
     end
   end
 
+  # management node
+  name = "management"
+  ipv4 = "192.168.205.10"
+  config.vm.network "forwarded_port", protocol: 'tcp', guest_ip: ipv4, guest: PORT_REDPANDA_CONSOLE, host_ip: '127.0.0.1', host: PORT_REDPANDA_CONSOLE
+  config.vm.define name do |machine|
+
+    machine.vm.hostname = name
+    machine.vm.network :private_network, :ip => ipv4
+    machine.vm.provider :libvirt do |v|
+      v.memory = 2048
+      v.cpus = 2
+    end
+
+    machine.vm.provision :ansible do |ansible|
+      ansible.playbook = "site.yml"
+      ansible.groups = ansible_groups
+      ansible.extra_vars = {
+        redpanda_console_kafka_brokers: [
+          "192.168.205.101:9092",
+          "192.168.205.102:9092",
+          "192.168.205.103:9092"
+        ]
+      }
+    end
+
+  end
 end

@@ -12,8 +12,7 @@
 - name: download | Check if Red Panda Console package checksum exists
   ansible.builtin.stat:
     path: "{{ redpanda_console_cache_download_directory.path }}/checksums.v{{ redpanda_console_version }}.txt"
-  register:
-    redpanda_console_checksums_file_stat
+  register: redpanda_console_checksums_file_stat
 
 - name: download | GET Red Panda Console release packages checksums
   ansible.builtin.get_url:
@@ -29,7 +28,7 @@
     chdir: "{{ redpanda_console_cache_download_directory.path }}"
     cmd: |
       set -e -u
-      grep "redpanda-console-{{ redpanda_console_version }}-1.{{ redpanda_console_package_arch }}.{{ redpanda_console_package_format_file_suffix }}" \
+      grep "redpanda-console_{{ redpanda_console_version }}_{{ redpanda_console_package_arch }}.{{ redpanda_console_package_format_file_suffix }}" \
       "./checksums.v{{ redpanda_console_version }}.txt"
     executable: "/bin/sh"
   changed_when: false # Just extracting the checksum line, so nothing has changed really.
@@ -49,4 +48,3 @@
     mode: u=rw-x,g=rw-x,o=r-x
     validate_certs: true
   register: redpanda_console_package_download_result
-...
