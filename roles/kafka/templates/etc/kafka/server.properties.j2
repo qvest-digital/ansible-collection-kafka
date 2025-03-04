@@ -37,7 +37,7 @@ broker.session.timeout.ms={{ kafka_server_broker_session_timeout_ms }}
 
 {% if kafka_controller_quorum_voters is defined %}
 controller.quorum.voters={% for node in kafka_controller_quorum_voters %}
-{{ node.node_id }}@{{ node.host }}:{{ node.port | default(kafka_port_client_default) }}{% if not loop.last %},{% endif %}
+{{ node.node_id }}@{{ node.host }}:{{ node.port | default(kafka_port_clients_default) }}{% if not loop.last %},{% endif %}
 {% endfor %}
 {% if kafka_dynamic_controller_quorum %}
 controller.quorum.bootstrap.servers={% for node in kafka_controller_quorum_voters %}
