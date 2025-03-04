@@ -4,7 +4,7 @@
 {% set kafka_inter_broker_listener = kafka_listeners | selectattr('type', 'equalto', 'broker') | selectattr('name', 'equalto', kafka_listener_name_inter_broker) | first -%}
 
 bootstrap.controllers={% for node in kafka_controller_quorum_voters %}
-{{ node.host }}:{{ node.port | default(kafka_port_controller_default) }}{% if not loop.last %},{% endif %}
+{{ node.host }}:{{ node.port | default(kafka_port_control_plane_default) }}{% if not loop.last %},{% endif %}
 {% endfor %}
 
 bootstrap.servers={% for node in kafka_controller_quorum_voters %}
